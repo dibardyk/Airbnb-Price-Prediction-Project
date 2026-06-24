@@ -8,3 +8,4 @@ Final project. Machine Learning SoSe 2026
 ## Links
 * Project Description: [Link](docs/description.md), [Pad](https://pad.gwdg.de/fL7knxI5QKS_bL81bkLewg)
 * Data: [Link](https://insideairbnb.com/get-the-data/)
+* Cleaned Data Explanation: [Link](docs/cleaned_data_notes.md)
