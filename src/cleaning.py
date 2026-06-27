@@ -55,6 +55,29 @@ TIME_MAPPING = {
 
 COUNT_COLS = ["host_listings_count", "accommodates", "bedrooms", "beds"]
 
+COLUMN_RENAMES = {
+    "id": "listing_id",
+    "host_is_superhost": "is_superhost",
+    "host_has_profile_pic": "host_has_pic",
+    "host_identity_verified": "is_host_verified",
+    "host_response_time_score": "response_time_score",
+    "neighbourhood_cleansed": "neighborhood",
+    "neighbourhood_group_cleansed": "neighborhood_group",
+    "minimum_nights": "min_nights",
+    "maximum_nights": "max_nights",
+    "availability_30": "avail_30",
+    "availability_365": "avail_365",
+    "number_of_reviews": "total_reviews",
+    "number_of_reviews_ltm": "reviews_last_12m",
+    "review_scores_rating": "rating_overall",
+    "review_scores_location": "rating_location",
+    "room_type_Entire home/apt": "room_type_entire_home",
+    "room_type_Hotel room": "room_type_hotel",
+    "room_type_Private room": "room_type_private",
+    "room_type_Shared room": "room_type_shared",
+    "bathrooms_numeric": "bathrooms"
+}
+
 
 def clean_text(text):
     return (text.fillna("")
@@ -128,6 +151,9 @@ def clean_listings(file_path):
         if col in df.columns:
             df[col] = df[col].isin(["t", "true", True, 1.0]).astype(int)
     
+    if "room_type" in df.columns:
+        df = pd.get_dummies(df, columns=["room_type"], dtype=int)
+    
     # Convert percentages to floats
     for col in RATE_COLS:
         if col in df.columns:
@@ -192,6 +218,8 @@ def clean_listings(file_path):
     if "license" in df.columns:
         df["has_license"] = df["license"].notna().astype(int) 
         df = df.drop(columns=["license"])
+    
+    df = df.rename(columns=COLUMN_RENAMES)
     
     return df
 
