@@ -12,35 +12,39 @@ URLS = [
 ]
 
 
-def download_raw_data(url_list=URLS, output_dir="data/raw"):
+def download_raw_data(url_list=URLS, output_dir="../data/raw"):
+    all_success = True
     output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-
+    
     for url in url_list:
-        filename = url.split("/")[-1]
-        file_path = output_path / filename
+        filename = Path(url).name
+        is_gz = filename.endswith(".gz")
         
-        print(f"Downloading: {filename}...")
+        filename = filename[:-3] if is_gz else filename
+        filepath = output_path / filename
+        
+        print(f"Processing: {filename}...")
+        
         try:
-            response = requests.get(url)
-            response.raise_for_status() 
-            
-            with open(file_path, "wb") as f:
-                f.write(response.content)
-            print(f"Download complete: {filename}")
-            
-            if file_path.suffix == ".gz":
-                new_filename = file_path.with_suffix("") 
+            with requests.get(url, stream=True, timeout=30) as response:
+                response.raise_for_status()
                 
-                print(f"Unpacking: {filename} -> {new_filename.name}...")
-                with gzip.open(file_path, "rb") as f_in:
-                    with open(new_filename, "wb") as f_out:
-                        shutil.copyfileobj(f_in, f_out) # type: ignore
-                
-                file_path.unlink()
-                print(f"Unpacked: {new_filename.name}")
+                if is_gz:
+                    with gzip.GzipFile(fileobj=response.raw, mode="rb") as f_in:
+                        with open(filepath, "wb") as f_out:
+                            shutil.copyfileobj(f_in, f_out)
+                else:
+                    with open(filepath, "wb") as f_out:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            f_out.write(chunk)
+                            
+            print(f"Successfully processed: {filename}")
                 
         except Exception as e:
             print(f"Error downloading {filename}: {e}")
-            
-    print("\nAll files successfully downloaded.")
+            all_success = False
+    
+    if all_success:
+        print("\nAll files successfully downloaded.")
+    else:
+        print("\nFinished, but some downloads failed.")
