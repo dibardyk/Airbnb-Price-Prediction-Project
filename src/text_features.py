@@ -1,12 +1,16 @@
 import pandas as pd
 from pathlib import Path
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
 from data_loader import load_data
 
 
 TEXT_COLUMNS = ["name", "description", "neighborhood_overview"]
 
+CUSTOM_STOPWORDS = [
+    "berlin", "apartment", "flat", "place", "stay", "room"
+]
 
 def combine_text_columns(df, text_columns=TEXT_COLUMNS):
     text = ""
@@ -27,12 +31,14 @@ def create_text_features(max_features=500):
     val_text = combine_text_columns(val)
     test_text = combine_text_columns(test)
 
+    stop_words = list(ENGLISH_STOP_WORDS.union(CUSTOM_STOPWORDS))
+
     vectorizer = TfidfVectorizer(
-        max_features=max_features,
-        stop_words="english",
+        max_features=500,
+        stop_words=stop_words,
         lowercase=True,
         min_df=3,
-        max_df=0.8
+        max_df=0.7
     )
 
     X_train = vectorizer.fit_transform(train_text)
@@ -69,3 +75,4 @@ def create_text_features(max_features=500):
 
 if __name__ == "__main__":
     create_text_features()
+    print("Features are created.")
