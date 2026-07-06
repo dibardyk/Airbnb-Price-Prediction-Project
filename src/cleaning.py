@@ -149,7 +149,7 @@ def clean_listings(file_path):
     # Convert all boolean to 1,0. For missing values assume 0
     for col in BOOL_COLS:
         if col in df.columns:
-            df[col] = df[col].isin(["t", "true", True, 1.0]).astype(int)
+            df[col] = df[col].isin(["t", "true", "True", True, 1.0, 1, "1", "1.0"]).astype(int)
     
     if "room_type" in df.columns:
         df = pd.get_dummies(df, columns=["room_type"], dtype=int)
@@ -158,7 +158,7 @@ def clean_listings(file_path):
     for col in RATE_COLS:
         if col in df.columns:
             df[col] = df[col].replace("N/A", pd.NA)
-            df[col] = df[col].astype(str).str.replace("%", "", regex=False)
+            df[col] = df[col].str.replace("%", "", regex=False)
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
     # Categorizing response time as numbers
@@ -193,8 +193,10 @@ def clean_listings(file_path):
     if "price" in df.columns:
         df["price"] = df["price"].astype(str).str.replace(r"[\$,]", "", regex=True)
         df["price"] = pd.to_numeric(df["price"], errors="coerce")
+        
         df = df.dropna(subset=["price"])
         df = df[df["price"] > 0]
+        
         df["log_price"] = np.log1p(df["price"])
         
     # Formatting minimum and maximum nights
@@ -213,6 +215,7 @@ def clean_listings(file_path):
     for col in ["review_scores_rating", "review_scores_location"]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
+    df["rating_is_missing"] = df["review_scores_rating"].isna().astype(int)
             
     # If there is some kind of a license it has a license.. so just boolean
     if "license" in df.columns:
@@ -225,6 +228,8 @@ def clean_listings(file_path):
 
 
 def clean_data():
+    CLEAN_DIR.mkdir(parents=True, exist_ok=True)
+    
     copy_files()
         
     reviews_path = RAW_DIR / "reviews.csv"

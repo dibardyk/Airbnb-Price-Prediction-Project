@@ -67,6 +67,7 @@
 | **total_reviews** | int | Total all-time reviews |
 | **reviews_last_12m** | int | Reviews in the Last 12 Months |
 | **rating_overall** | float | Overall aggregate guest rating |
+| **rating_overall** | bool (0/1) | 1 if rating_overall was empty (was replaced by train mean in data_loader) |
 | **rating_location** | float | Specific rating for the property's location context |
 | **instant_bookable** | bool (0/1) | if can book without manual host approval |
 

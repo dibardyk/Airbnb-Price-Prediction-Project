@@ -15,6 +15,7 @@ URLS = [
 def download_raw_data(url_list=URLS, output_dir="../data/raw"):
     all_success = True
     output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
     
     for url in url_list:
         filename = Path(url).name

@@ -1,8 +1,9 @@
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 
-def load_data(data_dir="../data/clean", random_seed=42):
+def load_data(data_dir="../data/clean", random_seed=42, price_upper_quantile=0.99):
     """
     Train 80%, Validation 20%, Test 20%
     
@@ -30,6 +31,59 @@ def load_data(data_dir="../data/clean", random_seed=42):
     
     train_val_list, test_list = train_test_split(listings, test_size=0.20, random_state=random_seed)
     train_list, val_list = train_test_split(train_val_list, test_size=0.20, random_state=random_seed)
+    
+    # Outlier removal based only on training set: 99% quantile
+    price_upper_bound = train_list["price"].quantile(price_upper_quantile)
+    
+    def filter_outliers(df):
+        mask_price = df["price"] <= price_upper_bound
+        return df[mask_price].copy()
+
+    # Apply outlier filtering ONLY to the training set (can be changed, but so it resembles "real" data)
+    train_list = filter_outliers(train_list)
+    val_list = val_list.copy()
+    test_list = test_list.copy()
+    
+    # For clean imputation replace the 0 (not a real rating) with nan
+    def replace_zeros_with_nan(df):
+        df = df.copy()
+        df["rating_overall"] = df["rating_overall"].replace(0, np.nan)
+        df["rating_location"] = df["rating_location"].replace(0, np.nan)
+        return df
+
+    train_list = replace_zeros_with_nan(train_list)
+    val_list = replace_zeros_with_nan(val_list)
+    test_list = replace_zeros_with_nan(test_list)
+    
+    # Missing value imputation
+    train_rating_mean = train_list["rating_overall"].mean()
+    train_loc_mean = train_list["rating_location"].mean()
+    train_resp_med = train_list["host_response_rate"].median()
+    train_accept_med = train_list["host_acceptance_rate"].median()
+    train_since_med = train_list["host_since_days"].median()
+
+    def impute_missing_values(df):
+        df = df.copy()
+        if "rating_overall" in df.columns:
+            df["rating_overall"] = df["rating_overall"].fillna(train_rating_mean)
+            
+        if "rating_location" in df.columns:
+            df["rating_location"] = df["rating_location"].fillna(train_loc_mean)
+            
+        if "host_response_rate" in df.columns:
+            df["host_response_rate"] = df["host_response_rate"].fillna(train_resp_med)
+            
+        if "host_acceptance_rate" in df.columns:
+            df["host_acceptance_rate"] = df["host_acceptance_rate"].fillna(train_accept_med)
+            
+        if "host_since_days" in df.columns:
+            df["host_since_days"] = df["host_since_days"].fillna(train_since_med)
+        return df
+
+    # Apply to all splits
+    train_list = impute_missing_values(train_list)
+    val_list = impute_missing_values(val_list)
+    test_list = impute_missing_values(test_list)
     
     train_rev = reviews[reviews["listing_id"].isin(train_list["listing_id"])]
     val_rev = reviews[reviews["listing_id"].isin(val_list["listing_id"])]
