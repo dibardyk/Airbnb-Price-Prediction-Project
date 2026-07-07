@@ -3,7 +3,9 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 
-def load_data(data_dir="../data/clean", random_seed=42, price_upper_quantile=0.99):
+SCRIPT_DIR = Path(__file__).parent
+
+def load_data(data_dir=None, random_seed=42, price_upper_quantile=0.99):
     """
     Train 80%, Validation 20%, Test 20%
     
@@ -19,7 +21,8 @@ def load_data(data_dir="../data/clean", random_seed=42, price_upper_quantile=0.9
     text_val = data["val"]["reviews"]
     text_test = data["test"]["reviews"]
     """
-    base_path = Path(__file__).parent / data_dir
+    base_path = Path(data_dir) if data_dir else (SCRIPT_DIR / "../data/clean")
+    base_path = base_path.resolve()
     listings_path = base_path / "listings.csv"
     reviews_path = base_path / "reviews.csv"
     

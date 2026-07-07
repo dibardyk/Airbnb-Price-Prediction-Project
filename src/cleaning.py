@@ -3,8 +3,9 @@ import numpy as np
 import shutil
 from pathlib import Path
 
-RAW_DIR = Path("../data/raw")
-CLEAN_DIR = Path("../data/clean")
+SCRIPT_DIR = Path(__file__).parent
+RAW_DIR = (SCRIPT_DIR / "../data/raw").resolve()
+CLEAN_DIR = (SCRIPT_DIR / "../data/clean").resolve()
 
 # Files that don't really need any cleaning
 CLEAN_FILES = ["neighbourhoods.geojson"]
@@ -118,6 +119,11 @@ def clean_listings(file_path):
     print(f"Cleaning: {file_path.name}...")
     df = pd.read_csv(file_path, low_memory=False)
     
+    if "last_scraped" in df.columns:
+        reference_date = pd.to_datetime(df["last_scraped"], errors="coerce").max()
+    else:
+        reference_date = pd.Timestamp.today().normalize()
+    
     cols_to_drop = [col for col in LISTINGS_DROP if col in df.columns]
     df = df.drop(columns=cols_to_drop)
     
@@ -127,7 +133,8 @@ def clean_listings(file_path):
             # Empty descriptions are filled with "" (can be changed to "No description" or something)
             df[col] = clean_text(df[col])
     
-    df["neighbourhood_cleansed"] = df["neighbourhood_cleansed"].str.replace(r"\s+", " ", regex=True)
+    if "neighbourhood_cleansed" in df.columns:
+        df["neighbourhood_cleansed"] = df["neighbourhood_cleansed"].str.replace(r"\s+", " ", regex=True)
     
     # Only really relevant if the host is local or not, so change it if Berlin is mentioned
     if "host_location" in df.columns:
@@ -139,8 +146,7 @@ def clean_listings(file_path):
     if "host_since" in df.columns:
         df["host_since"] = pd.to_datetime(df["host_since"], errors="coerce")
         
-        # Calculate the number of days being a host with a specific date
-        reference_date = pd.to_datetime("2026-01-01") 
+        # Calculate the number of days being a host with last scraped date
         df["host_since_days"] = (reference_date - df["host_since"]).dt.days
         
         df["host_since_days"] = df["host_since_days"].astype("Int64")
@@ -157,7 +163,7 @@ def clean_listings(file_path):
     # Convert percentages to floats
     for col in RATE_COLS:
         if col in df.columns:
-            df[col] = df[col].replace("N/A", pd.NA)
+            df[col] = df[col].astype(str).replace(["N/A", "nan", "<NA>"], pd.NA)
             df[col] = df[col].str.replace("%", "", regex=False)
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
@@ -215,7 +221,8 @@ def clean_listings(file_path):
     for col in ["review_scores_rating", "review_scores_location"]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
-    df["rating_is_missing"] = df["review_scores_rating"].isna().astype(int)
+    if "review_scores_rating" in df.columns:
+        df["rating_is_missing"] = df["review_scores_rating"].isna().astype(int)
             
     # If there is some kind of a license it has a license.. so just boolean
     if "license" in df.columns:

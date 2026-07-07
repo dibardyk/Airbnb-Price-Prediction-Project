@@ -10,12 +10,15 @@ URLS = [
     "https://data.insideairbnb.com/germany/be/berlin/2025-09-23/data/reviews.csv.gz",
     "https://data.insideairbnb.com/germany/be/berlin/2025-09-23/visualisations/neighbourhoods.geojson"
 ]
+SCRIPT_DIR = Path(__file__).parent
 
 
-def download_raw_data(url_list=URLS, output_dir="../data/raw"):
-    all_success = True
-    output_path = Path(output_dir)
+def download_raw_data(url_list=URLS, output_dir=None):
+    output_path = Path(output_dir) if output_dir else SCRIPT_DIR / "../data/raw"
+    output_path = output_path.resolve()
     output_path.mkdir(parents=True, exist_ok=True)
+    
+    all_success = True
     
     for url in url_list:
         filename = Path(url).name
@@ -23,6 +26,10 @@ def download_raw_data(url_list=URLS, output_dir="../data/raw"):
         
         filename = filename[:-3] if is_gz else filename
         filepath = output_path / filename
+        
+        if filepath.exists():
+            print(f"Skipping {filename}, already downloaded.")
+            continue
         
         print(f"Processing: {filename}...")
         
