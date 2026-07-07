@@ -21,7 +21,7 @@
 | **host_listings_count** | int | Total number of properties the host has |
 | **host_has_pic** | bool (0/1) | if the host has a photo |
 | **is_host_verified** | bool (0/1) | if verified |
-| **host_since_days** | int | Days elapsed since the host created their account (based on a fixed reference date) |
+| **host_since_days** | int | Days elapsed since the host created their account, relative to the listing's scrape date |
 | **response_time_score** | int | Ordinal score (1 to 4) representing response speed (4 = within an hour, 1 = days) |
 | **is_local_host** | bool (0/1) | if the host's location string contains "Berlin" |
 | **has_license** | bool (0/1) | if the host has a license |
@@ -59,7 +59,9 @@
 
 | Column | Type | Description |
 | --- | --- | --- |
-| **min_nights** | int | Minimum stay requirement |
+| **min_nights** | int | Minimum stay requirement, capped at 365 nights |
+| **is_long_term** | bool (0/1) | 1 if min_nights ≥ 28 (listing behaves like a long-term rental rather than a short tourist stay) |
+| **log_min_nights** | float | Natural log transformation of min_nights (`log1p()`) |
 | **max_nights** | int | Maximum stay allowed |
 | **has_availability** | bool (0/1) | if the calendar has any bookable days |
 | **avail_30** | int | Number of available days in the next 30 days |
@@ -67,7 +69,7 @@
 | **total_reviews** | int | Total all-time reviews |
 | **reviews_last_12m** | int | Reviews in the Last 12 Months |
 | **rating_overall** | float | Overall aggregate guest rating |
-| **rating_overall** | bool (0/1) | 1 if rating_overall was empty (was replaced by train mean in data_loader) |
+| **rating_is_missing** | bool (0/1) | 1 if rating_overall was empty (was replaced by train mean in data_loader) |
 | **rating_location** | float | Specific rating for the property's location context |
 | **instant_bookable** | bool (0/1) | if can book without manual host approval |
 

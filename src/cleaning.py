@@ -214,6 +214,13 @@ def clean_listings(file_path):
             else:
                 df[col] = df[col].fillna(365).astype(int)
     
+    # Dealing with long term listings: everything above a month is considered long term, 
+    # extreme values are capped as they mean the same thing mostly
+    if "minimum_nights" in df.columns:
+        df["is_long_term"] = (df["minimum_nights"] >= 28).astype(int)
+        df["minimum_nights"] = df["minimum_nights"].clip(upper=365)
+        df["log_min_nights"] = np.log1p(df["minimum_nights"])
+    
     for col in ["availability_30", "availability_365", "number_of_reviews", "number_of_reviews_ltm"]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0).astype(int)
