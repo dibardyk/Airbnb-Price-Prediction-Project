@@ -50,8 +50,10 @@ def load_data(data_dir=None, random_seed=42, price_upper_quantile=0.99):
     # For clean imputation replace the 0 (not a real rating) with nan
     def replace_zeros_with_nan(df):
         df = df.copy()
-        df["rating_overall"] = df["rating_overall"].replace(0, np.nan)
-        df["rating_location"] = df["rating_location"].replace(0, np.nan)
+        if "rating_overall" in df.columns:
+            df["rating_overall"] = df["rating_overall"].replace(0, np.nan)
+        if "rating_location" in df.columns:
+            df["rating_location"] = df["rating_location"].replace(0, np.nan)
         return df
 
     train_list = replace_zeros_with_nan(train_list)
@@ -59,11 +61,31 @@ def load_data(data_dir=None, random_seed=42, price_upper_quantile=0.99):
     test_list = replace_zeros_with_nan(test_list)
     
     # Missing value imputation
-    train_rating_mean = train_list["rating_overall"].mean()
-    train_loc_mean = train_list["rating_location"].mean()
-    train_resp_med = train_list["host_response_rate"].median()
-    train_accept_med = train_list["host_acceptance_rate"].median()
-    train_since_med = train_list["host_since_days"].median()
+    train_rating_mean = (
+        train_list["rating_overall"].mean()
+        if "rating_overall" in train_list.columns
+        else np.nan
+    )
+    train_loc_mean = (
+        train_list["rating_location"].mean()
+        if "rating_location" in train_list.columns
+        else np.nan
+    )
+    train_resp_med = (
+        train_list["host_response_rate"].median()
+        if "host_response_rate" in train_list.columns
+        else np.nan
+    )
+    train_accept_med = (
+        train_list["host_acceptance_rate"].median()
+        if "host_acceptance_rate" in train_list.columns
+        else np.nan
+    )
+    train_since_med = (
+        train_list["host_since_days"].median()
+        if "host_since_days" in train_list.columns
+        else np.nan
+    )
 
     def impute_missing_values(df):
         df = df.copy()

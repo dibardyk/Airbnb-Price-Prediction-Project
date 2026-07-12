@@ -103,15 +103,25 @@ def copy_files(src_dir=RAW_DIR, dst_dir=CLEAN_DIR):
 def clean_reviews(file_path):
     print(f"Cleaning: {file_path.name}...")
     df = pd.read_csv(file_path)
+
+    if "listing_id" not in df.columns:
+        raise KeyError("reviews.csv must contain a 'listing_id' column")
+
+    if "date" not in df.columns:
+        df["date"] = pd.NaT
+
+    if "comments" not in df.columns:
+        df["comments"] = ""
+
     df = df[REVIEWS_KEEP]
-    
-    # If comments are missing the entry is irrelevant
-    df = df.dropna(subset=["comments"])
-    df["date"] = pd.to_datetime(df["date"])
-    
+
+    # Keep listings even if comments are empty; empty text is still valid.
+    df = df.dropna(subset=["listing_id"])
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+
     # Formatting the comments
     df["comments"] = clean_text(df["comments"])
-    
+
     return df
 
 
@@ -257,3 +267,7 @@ def clean_data():
         cleaned_listings = clean_listings(listings_path)
         cleaned_listings.to_csv(CLEAN_DIR / "listings.csv", index=False)
         print(f"listings.csv saved to {CLEAN_DIR.name}")
+
+
+if __name__ == "__main__":
+    clean_data()
