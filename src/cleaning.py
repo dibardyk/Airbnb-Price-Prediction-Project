@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import shutil
+import json
+import re
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent
@@ -8,8 +10,7 @@ RAW_DIR = (SCRIPT_DIR / "../data/raw").resolve()
 CLEAN_DIR = (SCRIPT_DIR / "../data/clean").resolve()
 
 # Files that don't really need any cleaning
-CLEAN_FILES = ["neighbourhoods.geojson"]
-
+CLEAN_FILES = []
 
 # id, reviewer_id, reviewer_name columns are probably irrelevant for ML
 REVIEWS_KEEP = ["listing_id", "date", "comments"]
@@ -79,6 +80,8 @@ COLUMN_RENAMES = {
     "bathrooms_numeric": "bathrooms"
 }
 
+GEOJSON_PROPERTY_RENAMES = {"neighbourhood": "neighborhood", "neighbourhood_group": "neighborhood_group"}
+
 
 def clean_text(text):
     return (text.fillna("")
@@ -98,6 +101,35 @@ def copy_files(src_dir=RAW_DIR, dst_dir=CLEAN_DIR):
             print(f"Copied without changes: {filename}")
         else:
             print(f"Error: {filename} not found in {RAW_DIR}")
+
+
+def normalize_geo_name(value):
+    if value is None or (isinstance(value, float) and np.isnan(value)):
+        return value
+    return re.sub(r"\s+", " ", str(value)).strip()
+
+
+def clean_geojson(file_path):
+    print(f"Cleaning: {file_path.name}...")
+    with open(file_path, "r", encoding="utf-8") as f:
+        geo = json.load(f)
+
+    for feature in geo["features"]:
+        props = feature.get("properties", {})
+        cleaned_props = {}
+        for key, value in props.items():
+            new_key = GEOJSON_PROPERTY_RENAMES.get(key, key)
+            if isinstance(value, str):
+                value = normalize_geo_name(value)
+            cleaned_props[new_key] = value
+        feature["properties"] = cleaned_props
+
+    return geo
+
+
+def save_geojson(geo, dst_path):
+    with open(dst_path, "w", encoding="utf-8") as f:
+        json.dump(geo, f, ensure_ascii=False)
 
 
 def clean_reviews(file_path):
@@ -255,7 +287,13 @@ def clean_data():
     CLEAN_DIR.mkdir(parents=True, exist_ok=True)
     
     copy_files()
-        
+
+    geojson_path = RAW_DIR / "neighbourhoods.geojson"
+    if geojson_path.exists():
+        cleaned_geo = clean_geojson(geojson_path)
+        save_geojson(cleaned_geo, CLEAN_DIR / "neighbourhoods.geojson")
+        print(f"neighbourhoods.geojson saved to {CLEAN_DIR.name}")
+
     reviews_path = RAW_DIR / "reviews.csv"
     if reviews_path.exists():
         cleaned_reviews = clean_reviews(reviews_path)
