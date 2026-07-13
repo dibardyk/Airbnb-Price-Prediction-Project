@@ -136,20 +136,11 @@ def clean_reviews(file_path):
     print(f"Cleaning: {file_path.name}...")
     df = pd.read_csv(file_path)
 
-    if "listing_id" not in df.columns:
-        raise KeyError("reviews.csv must contain a 'listing_id' column")
-
-    if "date" not in df.columns:
-        df["date"] = pd.NaT
-
-    if "comments" not in df.columns:
-        df["comments"] = ""
-
     df = df[REVIEWS_KEEP]
 
-    # Keep listings even if comments are empty; empty text is still valid.
-    df = df.dropna(subset=["listing_id"])
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    # If comments are missing the entry is irrelevant
+    df = df.dropna(subset=["comments"])
+    df["date"] = pd.to_datetime(df["date"])
 
     # Formatting the comments
     df["comments"] = clean_text(df["comments"])
