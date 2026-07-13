@@ -221,3 +221,7 @@ __marimo__/
 data/raw/*
 data/clean/*
 data/processed/*
+data/model_ready/*
+output/models/*
+output/predictions/*
+output/results/*

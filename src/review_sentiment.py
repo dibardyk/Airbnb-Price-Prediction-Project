@@ -10,7 +10,7 @@ def compute_sentiment_features():
 
     analyzer = SentimentIntensityAnalyzer()
 
-    output_dir = Path("../data/processed")
+    output_dir = Path(__file__).resolve().parent.parent / "data" / "processed"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     for split in ["train", "val", "test"]:

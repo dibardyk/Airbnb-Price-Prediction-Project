@@ -66,7 +66,7 @@ def create_text_features(max_features=500):
     val_features.insert(0, "listing_id", val["listing_id"].values)
     test_features.insert(0, "listing_id", test["listing_id"].values)
 
-    output_dir = Path("../data/processed")
+    output_dir = Path(__file__).resolve().parent.parent / "data" / "processed"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     train_features.to_csv(output_dir / "text_features_train.csv", index=False)
