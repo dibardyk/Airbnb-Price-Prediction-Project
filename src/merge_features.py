@@ -45,6 +45,10 @@ def merge_split_features(listings, split_name):
         f"review_sentiment_features_{split_name}.csv"
     )
 
+    spatial = load_feature_file(
+        f"spatial_features_{split_name}.csv"
+    )
+
     # One listing should appear only once in each feature table
     if listings["listing_id"].duplicated().any():
         raise ValueError(
@@ -61,6 +65,11 @@ def merge_split_features(listings, split_name):
             f"Duplicate listing_id values in {split_name} sentiment features."
         )
 
+    if spatial["listing_id"].duplicated().any():
+        raise ValueError(
+            f"Duplicate listing_id values in {split_name} spatial features."
+        )
+
     original_rows = len(listings)
 
     # Every listing should have TF-IDF features
@@ -74,6 +83,14 @@ def merge_split_features(listings, split_name):
     # Some listings may have no reviews, so left join is required
     merged = merged.merge(
         sentiment,
+        on="listing_id",
+        how="left",
+        validate="one_to_one"
+    )
+
+    # Every listing has coordinates, so every listing should have spatial features 
+    merged = merged.merge(
+        spatial,
         on="listing_id",
         how="left",
         validate="one_to_one"

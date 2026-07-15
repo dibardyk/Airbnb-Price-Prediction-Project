@@ -12,6 +12,7 @@ FeatureSet = Literal[
     "tabular",
     "tabular_text",
     "tabular_sentiment",
+    "tabular_spatial",
     "all",
 ]
 
@@ -37,6 +38,16 @@ SENTIMENT_COLUMNS = [
     "positive_review_share",
     "has_reviews",
 ]
+
+SPATIAL_COLUMNS = [
+    "dist_to_center",
+    "cluster",
+    "dist_to_cluster",
+    "dist_to_station",
+]
+
+# Exported for completeness, but excluded from feature_set except "all" because it degraded performance in testing
+SPATIAL_EXCLUDED_COLUMNS = ["knn_price_smooth"]
 
 
 def load_model_ready_data() -> tuple[
@@ -102,8 +113,11 @@ def create_xy(
         tabular_sentiment
             Tabular features plus review sentiment features.
 
+        tabular_spatial
+            Tabular features plus engineered spatial features
+
         all
-            Tabular, TF-IDF and review sentiment features.
+            Tabular, TF-IDF, review sentiment, and every spatial feature
     """
 
     if target not in TARGET_COLUMNS:
@@ -144,16 +158,41 @@ def create_xy(
         if column in X.columns
     ]
 
+    spatial_columns = [
+        column
+        for column in SPATIAL_COLUMNS
+        if column in X.columns
+    ]
+
+    spatial_excluded_columns = [
+        column
+        for column in SPATIAL_EXCLUDED_COLUMNS
+        if column in X.columns
+    ]
+
     if feature_set == "tabular":
         X = X.drop(
             columns=tfidf_columns + sentiment_columns
+            + spatial_columns + spatial_excluded_columns
         )
 
     elif feature_set == "tabular_text":
-        X = X.drop(columns=sentiment_columns)
+        X = X.drop(
+            columns=sentiment_columns
+            + spatial_columns + spatial_excluded_columns
+        )
 
     elif feature_set == "tabular_sentiment":
-        X = X.drop(columns=tfidf_columns)
+        X = X.drop(
+            columns=tfidf_columns
+            + spatial_columns + spatial_excluded_columns
+        )
+
+    elif feature_set == "tabular_spatial":
+        X = X.drop(
+            columns=tfidf_columns + sentiment_columns
+            + spatial_excluded_columns
+        )
 
     elif feature_set == "all":
         pass

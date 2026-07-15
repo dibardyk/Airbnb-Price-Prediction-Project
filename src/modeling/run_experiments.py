@@ -57,6 +57,10 @@ EXPERIMENTS = [
     # Test the effect of review sentiment
     ("xgboost", "tabular_sentiment"),
 
+    # Test the effect of engineered spatial features
+    ("random_forest", "tabular_spatial"),
+    ("xgboost", "tabular_spatial"),
+
     # Full multimodal dataset
     ("xgboost", "all"),
 ]
