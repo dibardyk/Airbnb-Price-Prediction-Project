@@ -74,4 +74,5 @@ tzdata==2026.2
 urllib3==2.7.0
 vaderSentiment==3.3.2
 wcwidth==0.8.2
+xgboost==3.3.0
 xyzservices==2026.3.0
